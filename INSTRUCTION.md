@@ -1,7 +1,7 @@
 WebGL Clustered and Forward+ Shading - Instructions
 ==========================================================
 
-**This is due Thursday 11/3**
+**This is due Sunday 11/3**
 
 ## Running the code
 
