@@ -3,6 +3,11 @@ WebGL Clustered and Forward+ Shading - Instructions
 
 **This is due Sunday 11/3**
 
+## Useful links to look at:
+
+- Slides for Oct 14: [both](https://onedrive.live.com/view.aspx?resid=A6B78147D66DD722!93548&ithint=file%2cxlsx&authkey=!AC17RLmykXplR7Y) slide decks
+- webgl interactive [visualizer](https://jsfiddle.net/5mdL3wjr/)
+
 ## Running the code
 
 - Clone this repository
