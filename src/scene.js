@@ -1,7 +1,7 @@
 const MinimalGLTFLoader = require('../lib/minimal-gltf-loader');
 import { gl } from './init';
 
-// TODO: Edit if you want to change the light initial positions 
+// TDO: Edit if you want to change the light initial positions 
 export const LIGHT_MIN = [-14, 0, -6];
 export const LIGHT_MAX = [14, 20, 6];
 export const LIGHT_RADIUS = 5.0;
@@ -157,7 +157,7 @@ class Scene {
 
   update() {
     for (let i = 0; i < NUM_LIGHTS; i++) {
-      // OPTIONAL TODO: Edit if you want to change how lights move
+      // OPTIONAL TDO: Edit if you want to change how lights move
       this.lights[i].position[1] += LIGHT_DT;
       // wrap lights from bottom to top
       this.lights[i].position[1] = (this.lights[i].position[1] + LIGHT_MAX[1] - LIGHT_MIN[1]) % LIGHT_MAX[1] + LIGHT_MIN[1];
