@@ -16,6 +16,10 @@ export default class BaseRenderer {
     // TODO: Update the cluster texture with the count and indices of the lights in each cluster
     // This will take some time. The math is nontrivial...
 	//Note: initialized with (15, 15, 15) for relevant renderers
+    //For finding tile index in depth, using DOOM method:
+    //Z = Near_z * \frac{Far_z}{Near_z}^\frac{slice}{numSlices}
+    //Going the opposite way:
+    //$slice = \lfloor log(Z) * \frac{numSlices}{log(\frac{Far_z}{Near_z})} - \frac{numSlices*log(Near_z)}{log(\frac{Far_z}{Near_z})} \rfloor$
 
 	console.log(viewMatrix);
 	let xformedLights = [];
