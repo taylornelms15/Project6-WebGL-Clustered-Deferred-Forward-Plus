@@ -1,5 +1,5 @@
 import TextureBuffer from './textureBuffer';
-import { matrix } from 'mathjs'
+import { mat4, vec4, vec3, vec2 } from 'gl-matrix';
 
 export const MAX_LIGHTS_PER_CLUSTER = 100;
 
@@ -21,22 +21,39 @@ export default class BaseRenderer {
     //Going the opposite way:
     //$slice = \lfloor log(Z) * \frac{numSlices}{log(\frac{Far_z}{Near_z})} - \frac{numSlices*log(Near_z)}{log(\frac{Far_z}{Near_z})} \rfloor$
 
-	console.log(viewMatrix);
 	let xformedLights = [];
-	let viewMat = matrix([[viewMatrix[0], viewMatrix[1], viewMatrix[2], viewMatrix[3]],
-						  [viewMatrix[4], viewMatrix[5], viewMatrix[6], viewMatrix[7]],
-						  [viewMatrix[8], viewMatrix[9], viewMatrix[10], viewMatrix[11]],
-						  [viewMatrix[12], viewMatrix[13], viewMatrix[14], viewMatrix[15]]);
 	for(let i = 0; i < MAX_LIGHTS_PER_CLUSTER; i++){
-		xformedLights[i] = matrix(viewMatrix) * Vec4(scene.lights[i].position, 1.0);
+		let posVec = new Float32Array(4);//Eventual TODO: make this function not be garbage
+		posVec[0] = scene.lights[i].position[0];
+		posVec[1] = scene.lights[i].position[1];
+		posVec[2] = scene.lights[i].position[2];
+		posVec[3] = 1.0;
+		xformedLights[i] = vec4.create();
+		vec4.transformMat4(xformedLights[i], posVec, viewMatrix);
+		//console.log(scene.lights[i].position);
+		//console.log(xformedLights[i]);
 	}
+
+	let yMin = -1.0 * (camera.getFilmHeight() / 2.0);
+	let xMin = -1.0 * (camera.getFilmWidth() / 2.0);
+	let zMin = -1.0 * camera.near;
+	let zMax = -1.0 * camera.far;
+	//let zTitantic = -1.0 * camera.whereverYouAre;
+	let yDelta = camera.getFilmHeight() / this._ySlices;
+	let xDelta = camera.getFilmWidth() / this._xSlices;
 
     for (let z = 0; z < this._zSlices; ++z) {
       for (let y = 0; y < this._ySlices; ++y) {
+		let yLo = yMin + yDelta * y;
+		let yHi = yMin + yDelta * (y + 1);
         for (let x = 0; x < this._xSlices; ++x) {
           let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
           // Reset the light count to 0 for every cluster
           this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
+
+		  let xLo = xMin + xDelta * x;
+		  let xHi = xMin + xDelta * (x + 1);
+
 		  //Fill clusterTexture
 		  //For each (tile?) cluster, are MAX_LIGHTS_PER_CLUSER + 1 floats at the cluster's coordinate
 		  //first float is number of lights at this one, every float after that an index for next light in list
