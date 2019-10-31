@@ -12,6 +12,8 @@ export default function(params) {
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
 
+  uniform mat4 u_viewMatrix;
+
   varying vec3 v_position;
   varying vec3 v_normal;
   varying vec2 v_uv;
@@ -91,6 +93,10 @@ export default function(params) {
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
+    //Note: gl_FragCoord's z component has some kind of screen-space depth in it
+	vec4 screenSpaceCoord = u_viewMatrix * vec4(v_position, 1.0);
+	fragColor.xy = 1.0 / 32.0 * (screenSpaceCoord.xy + 16.0);
+	fragColor.z = -1.0 / 16.0 * screenSpaceCoord.z;
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;

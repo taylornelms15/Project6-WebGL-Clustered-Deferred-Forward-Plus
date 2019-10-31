@@ -27,7 +27,7 @@ export default class BaseRenderer {
   }
 
   updateClusters(camera, viewMatrix, scene) {
-    // TODO: Update the cluster texture with the count and indices of the lights in each cluster
+    // TDO: Update the cluster texture with the count and indices of the lights in each cluster
     // This will take some time. The math is nontrivial...
 	//Note: initialized with (15, 15, 15) for relevant renderers
     //For finding tile index in depth, using DOOM method:
@@ -65,6 +65,7 @@ export default class BaseRenderer {
 		  //We'll assume that we've defined a rough cube. This is false, but useful.
 		  //As such, we can transform our min/max coords back into world space, and check them against the lights
 		  //A better solution would check more than the corners, but fuck that noise.
+		  //...ok fine TODO: check against the other interpretation of the cube, too (br to tl)
 		  let blCorner = [xLo, yLo, zLo, 1.0];
 		  let trCorner = [xHi, yHi, zHi, 1.0];
 		  vec4.transformMat4(blCorner, blCorner, invXform);
@@ -90,7 +91,7 @@ export default class BaseRenderer {
 		  //For each (tile?) cluster, are MAX_LIGHTS_PER_CLUSER + 1 floats at the cluster's coordinate
 		  //first float is number of lights at this one, every float after that an index for next light in list
 		  // - alternative, set of booleans for "this light present or not" - would work for packing more efficiently, could bitmask inside ints (later)
-		  //Clusters are just dividing the screen space
+		  // Clusters are just dividing the screen space
 			}
 		  }
 		}
