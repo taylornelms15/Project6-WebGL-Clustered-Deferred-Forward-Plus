@@ -15,10 +15,13 @@ export default function(params) {
   uniform mat4 u_viewMatrix;
   uniform ivec3 u_numslices;
   uniform vec4 u_filmextents;/*0: width, 1: height, 2: near, 3: far */ 
+  uniform ivec2 u_resolution;
 
   varying vec3 v_position;
   varying vec3 v_normal;
   varying vec2 v_uv;
+
+  #define MAX_LIGHTS_PER_CLUSTER 100
 
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
@@ -32,6 +35,11 @@ export default function(params) {
     vec3 position;
     float radius;
     vec3 color;
+  };
+
+  struct LightList{
+	int numberOfLights;
+	int lightList[MAX_LIGHTS_PER_CLUSTER];
   };
 
   float ExtractFloat(sampler2D texture, int textureWidth, int textureHeight, int index, int component) {
@@ -67,6 +75,37 @@ export default function(params) {
     return light;
   }
 
+  /**
+  Note: the starting index will include the "numLights" value at the front end of things
+  Throw out this value, probably
+  */
+  vec4 getLightIndexesFromClusterBuffer(float u, int startingIndex){
+	//there are (MAX_LIGHTS_PER_CLUSTER + 1) / 4 texels within our v value
+	float delta = 4.0 / float(MAX_LIGHTS_PER_CLUSTER + 1);
+	float v = float(startingIndex) / 4.0 * delta;
+	return texture2D(u_clusterbuffer, vec2(u, v));
+  }
+
+  void UnpackLightList(int cIndex, inout LightList list){
+	int numSliceTotal = u_numslices.x * u_numslices.y * u_numslices.z;
+	float u = float(cIndex + 1) / float(numSliceTotal + 1);
+	vec4 firstFour = texture2D(u_clusterbuffer, vec2(u, 0));
+	int thisOneLightTotal = int(firstFour.x);
+	list.numberOfLights = thisOneLightTotal;
+	//our 101 values are spread around the v dimension of the texture, which ranges from 0 to 1
+	for(int i = 0; i < MAX_LIGHTS_PER_CLUSTER + 1; i += 4){
+		if (i > thisOneLightTotal + 1) break;
+		vec4 next4 = getLightIndexesFromClusterBuffer(u, i);
+		for(int j = 0; j < 4; j++){
+			if (i == 0 && j == 0) continue;//skip very first element
+			int listIndex = i + j - 1;
+			if (listIndex > thisOneLightTotal) break;
+			list.lightList[i + j - 1] = int(next4[j]);
+		}//for j
+	}//for i
+
+  }
+
   // Cubic approximation of gaussian curve so we falloff to exactly 0 at the light radius
   float cubicGaussian(float h) {
     if (h < 1.0) {
@@ -85,24 +124,24 @@ export default function(params) {
 	return int(sliceNum);
   }
 
-  int indexLinear(float min, float width, int numslices, float pos){
-	float percentageAcross = (pos - min) / width;
-	return int(percentageAcross * float(numslices));
+  ivec2 indicesLinear(int numslicesX, int numslicesY){
+	float xPercentage = gl_FragCoord.x / float(u_resolution.x);
+	float yPercentage = gl_FragCoord.y / float(u_resolution.y);
+	int xIndex = int(xPercentage * float(numslicesX));
+	int yIndex = int(yPercentage * float(numslicesY));
+	return ivec2(xIndex, yIndex);
   }
 
   ivec3 index3ForScreenPosition(vec3 screenPos){
-	float xMin = -1.0 * (u_filmextents.x / 2.0);
-	float yMin = -1.0 * (u_filmextents.y / 2.0);
 	float z = -1.0 * screenPos.z;
-	int xIndex = indexLinear(xMin, u_filmextents.x, u_numslices.x, screenPos.x);
-	int yIndex = indexLinear(yMin, u_filmextents.y, u_numslices.y, screenPos.y);
+	ivec2 xyIndex = indicesLinear(u_numslices.x, u_numslices.y);
 	int zIndex = indexZ(u_filmextents.z, u_filmextents.w, u_numslices.z, z);
-	return ivec3(xIndex, yIndex, zIndex);
+	return ivec3(xyIndex.x, xyIndex.y, zIndex);
   }
 
   int indexForScreenPosition(vec3 screenPos){
-  
-	return 0;
+	ivec3 i3 = index3ForScreenPosition(screenPos);
+	return (i3.x + i3.y * u_numslices.x + i3.z * u_numslices.x * u_numslices.y);
   }
 
   void main() {
@@ -112,9 +151,12 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
-    //Note: gl_FragCoord's z component has some kind of screen-space depth in it
+    //Note: gl_FragCoord's z component has some kind of screen-space depth in it; not sure how to trust, though
 	vec4 screenSpaceCoord = u_viewMatrix * vec4(v_position, 1.0);
 	ivec3 indices = index3ForScreenPosition(screenSpaceCoord.xyz);
+	int cIndex = indexForScreenPosition(screenSpaceCoord.xyz);
+	LightList clusterList;
+	UnpackLightList(cIndex, clusterList);
     for (int i = 0; i < ${params.numLights}; ++i) {
       Light light = UnpackLight(i);
       float lightDistance = distance(light.position, v_position);
@@ -125,8 +167,7 @@ export default function(params) {
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
-	//fragColor.x = float(indices.x) / float(u_numslices.x);
-	//fragColor.y = float(indices.y) / float(u_numslices.y);
+	fragColor.x += float(clusterList.numberOfLights) * 0.25;
 	//fragColor.z = float(indices.z) / float(u_numslices.z);
 
     const vec3 ambientLight = vec3(0.025);

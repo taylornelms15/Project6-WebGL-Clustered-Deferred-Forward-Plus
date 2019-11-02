@@ -1,20 +1,25 @@
 import TextureBuffer from './textureBuffer';
 import { mat4, vec4, vec3, vec2 } from 'gl-matrix';
 
-export const MAX_LIGHTS_PER_CLUSTER = 100;
+export const MAX_LIGHTS_PER_CLUSTER = 6;
 
 function squared(val){return val * val;}
+function distBetweenSqrd(point1, point2){
+	return (squared(point2[0] - point1[0]) + squared(point2[1] - point1[1])  + squared(point2[2] - point1[2]));
+}
 
-function doesSphereEncroachOnCube(corner1, corner2, center, radius){
-	var dist_squared = radius * radius;
-    if (center[0] < corner1[0]) dist_squared -= squared(center[0] - corner1[0]);
-    else if (center[0] > corner2[0]) dist_squared -= squared(center[0] - corner2[0]);
-    if (center[1] < corner1[1]) dist_squared -= squared(center[1] - corner1[1]);
-    else if (center[1] > corner2[1]) dist_squared -= squared(center[1] - corner2[1]);
-    if (center[2] < corner1[2]) dist_squared -= squared(center[2] - corner1[2]);
-    else if (center[2] > corner2[2]) dist_squared -= squared(center[2] - corner2[2]);
 
-	return dist_squared > 0;
+function doesSphereEncroachOnCube(cornerArray, center, radius){
+	let retval = false;
+	let rsquared = radius * radius;
+	for(let i = 0; i < 8; i++){
+		let thisCorner = cornerArray[i];
+		if(distBetweenSqrd(center, thisCorner) < rsquared) {
+			return true;
+		}
+	}
+
+	return retval;
 }
 
 export default class BaseRenderer {
@@ -34,6 +39,7 @@ export default class BaseRenderer {
     //Z = Near_z * \frac{Far_z}{Near_z}^\frac{slice}{numSlices}
     //Going the opposite way:
     //$slice = \lfloor log(Z) * \frac{numSlices}{log(\frac{Far_z}{Near_z})} - \frac{numSlices*log(Near_z)}{log(\frac{Far_z}{Near_z})} \rfloor$
+    var util = require('util');
 
 	let invXform = mat4.create();
 	mat4.invert(invXform, viewMatrix);
@@ -66,18 +72,29 @@ export default class BaseRenderer {
 		  //As such, we can transform our min/max coords back into world space, and check them against the lights
 		  //A better solution would check more than the corners, but fuck that noise.
 		  //...ok fine TODO: check against the other interpretation of the cube, too (br to tl)
-		  let blCorner = [xLo, yLo, zLo, 1.0];
-		  let trCorner = [xHi, yHi, zHi, 1.0];
-		  vec4.transformMat4(blCorner, blCorner, invXform);
-		  vec4.transformMat4(trCorner, trCorner, invXform);
-
+		  let corner1 = [xLo, yLo, -zLo, 1.0];
+		  let corner2 = [xLo, yLo, -zHi, 1.0];
+		  let corner3 = [xLo, yHi, -zLo, 1.0];
+		  let corner4 = [xLo, yHi, -zHi, 1.0];
+		  let corner5 = [xHi, yLo, -zLo, 1.0];
+		  let corner6 = [xHi, yLo, -zHi, 1.0];
+		  let corner7 = [xHi, yHi, -zLo, 1.0];
+		  let corner8 = [xHi, yHi, -zHi, 1.0];
+		  let cornerArray = [corner1, corner2, corner3, corner4, corner5, corner6, corner7, corner8];
+		  vec4.transformMat4(cornerArray[1], corner2, invXform);
+		  vec4.transformMat4(cornerArray[2], corner3, invXform);
+		  vec4.transformMat4(cornerArray[3], corner4, invXform);
+		  vec4.transformMat4(cornerArray[4], corner5, invXform);
+		  vec4.transformMat4(cornerArray[5], corner6, invXform);
+		  vec4.transformMat4(cornerArray[6], corner7, invXform);
+		  vec4.transformMat4(cornerArray[7], corner8, invXform);
 
 		  let numLights = 0;
 		  for(let j = 0; j < MAX_LIGHTS_PER_CLUSTER; j++){
 			let lightPos = scene.lights[j].position;
 			let radius = scene.lights[j].radius;
 			let posVec = [lightPos[0], lightPos[1], lightPos[2], 1.0];
-			let doesEncroach = doesSphereEncroachOnCube(blCorner, trCorner, posVec, radius);
+			let doesEncroach = doesSphereEncroachOnCube(cornerArray, posVec, radius);
 			if (doesEncroach){
 				numLights += 1;
 				let wholePart = Math.floor(numLights / 4);
