@@ -13,6 +13,8 @@ export default function(params) {
   uniform sampler2D u_clusterbuffer;
 
   uniform mat4 u_viewMatrix;
+  uniform ivec3 u_numslices;
+  uniform vec4 u_filmextents;/*0: width, 1: height, 2: near, 3: far */ 
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -76,6 +78,33 @@ export default function(params) {
     }
   }
 
+  /* $slice = \lfloor log(Z) * \frac{numSlices}{log(\frac{Far_z}{Near_z})} - \frac{numSlices*log(Near_z)}{log(\frac{Far_z}{Near_z})} \rfloor$ */
+  int indexZ(float near, float far, int numslices, float pos){
+	float logFarOverNear = log(far / near); 
+	float sliceNum = log(pos) * (float(numslices) / logFarOverNear) - ((float(numslices) * log(near)) / logFarOverNear);
+	return int(sliceNum);
+  }
+
+  int indexLinear(float min, float width, int numslices, float pos){
+	float percentageAcross = (pos - min) / width;
+	return int(percentageAcross * float(numslices));
+  }
+
+  ivec3 index3ForScreenPosition(vec3 screenPos){
+	float xMin = -1.0 * (u_filmextents.x / 2.0);
+	float yMin = -1.0 * (u_filmextents.y / 2.0);
+	float z = -1.0 * screenPos.z;
+	int xIndex = indexLinear(xMin, u_filmextents.x, u_numslices.x, screenPos.x);
+	int yIndex = indexLinear(yMin, u_filmextents.y, u_numslices.y, screenPos.y);
+	int zIndex = indexZ(u_filmextents.z, u_filmextents.w, u_numslices.z, z);
+	return ivec3(xIndex, yIndex, zIndex);
+  }
+
+  int indexForScreenPosition(vec3 screenPos){
+  
+	return 0;
+  }
+
   void main() {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
@@ -83,6 +112,9 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
+    //Note: gl_FragCoord's z component has some kind of screen-space depth in it
+	vec4 screenSpaceCoord = u_viewMatrix * vec4(v_position, 1.0);
+	ivec3 indices = index3ForScreenPosition(screenSpaceCoord.xyz);
     for (int i = 0; i < ${params.numLights}; ++i) {
       Light light = UnpackLight(i);
       float lightDistance = distance(light.position, v_position);
@@ -93,10 +125,9 @@ export default function(params) {
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
-    //Note: gl_FragCoord's z component has some kind of screen-space depth in it
-	vec4 screenSpaceCoord = u_viewMatrix * vec4(v_position, 1.0);
-	fragColor.xy = 1.0 / 32.0 * (screenSpaceCoord.xy + 16.0);
-	fragColor.z = -1.0 / 16.0 * screenSpaceCoord.z;
+	//fragColor.x = float(indices.x) / float(u_numslices.x);
+	//fragColor.y = float(indices.y) / float(u_numslices.y);
+	//fragColor.z = float(indices.z) / float(u_numslices.z);
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
