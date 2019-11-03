@@ -12,16 +12,17 @@ export default function(params) {
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
 
+  uniform mat4 u_viewProjectionMatrix;
   uniform mat4 u_viewMatrix;
   uniform ivec3 u_numslices;
-  uniform vec4 u_filmextents;/*0: width, 1: height, 2: near, 3: far */ 
+  uniform vec4 u_filmextents;/*0: fov, 1: aspectratio, 2: near, 3: far */ 
   uniform ivec2 u_resolution;
 
   varying vec3 v_position;
   varying vec3 v_normal;
   varying vec2 v_uv;
 
-  #define MAX_LIGHTS_PER_CLUSTER 100
+  #define MAX_LIGHTS_PER_CLUSTER ${params.numLights}
 
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
@@ -100,7 +101,8 @@ export default function(params) {
 			if (i == 0 && j == 0) continue;//skip very first element
 			int listIndex = i + j - 1;
 			if (listIndex > thisOneLightTotal) break;
-			list.lightList[i + j - 1] = int(next4[j]);
+			//list.lightList[i + j - 1] = int(next4[j]);
+			list.lightList[i + j - 1] = int((j == 0) ? next4.x : (j == 1) ? next4.y : (j == 2) ? next4.z : next4.w);
 		}//for j
 	}//for i
 
@@ -124,9 +126,15 @@ export default function(params) {
 	return int(sliceNum);
   }
 
-  ivec2 indicesLinear(int numslicesX, int numslicesY){
-	float xPercentage = gl_FragCoord.x / float(u_resolution.x);
-	float yPercentage = gl_FragCoord.y / float(u_resolution.y);
+  ivec2 indicesLinear(int numslicesX, int numslicesY, vec3 screenPos, int zIndex){
+	float zDistFar = u_filmextents.z * pow((u_filmextents.w / u_filmextents.z), ((float(zIndex) + 1.0) / float(u_numslices.z)));
+	float halfTangent = tan(radians(u_filmextents.x * 0.5));
+	float frustumHeight = 2.0 * zDistFar * halfTangent;
+	float frustumWidth = frustumHeight * u_filmextents.y;
+	float xPercentage = (screenPos.x + (frustumWidth * 0.5)) / frustumWidth;
+	float yPercentage = (screenPos.y + (frustumHeight * 0.5)) / frustumHeight;
+	//float xPercentage = gl_FragCoord.x / float(u_resolution.x);
+	//float yPercentage = gl_FragCoord.y / float(u_resolution.y);
 	int xIndex = int(xPercentage * float(numslicesX));
 	int yIndex = int(yPercentage * float(numslicesY));
 	return ivec2(xIndex, yIndex);
@@ -134,8 +142,8 @@ export default function(params) {
 
   ivec3 index3ForScreenPosition(vec3 screenPos){
 	float z = -1.0 * screenPos.z;
-	ivec2 xyIndex = indicesLinear(u_numslices.x, u_numslices.y);
 	int zIndex = indexZ(u_filmextents.z, u_filmextents.w, u_numslices.z, z);
+	ivec2 xyIndex = indicesLinear(u_numslices.x, u_numslices.y, screenPos, zIndex);
 	return ivec3(xyIndex.x, xyIndex.y, zIndex);
   }
 
@@ -158,7 +166,9 @@ export default function(params) {
 	LightList clusterList;
 	UnpackLightList(cIndex, clusterList);
     for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+      //Light light = UnpackLight(i);
+	  if (i >= clusterList.numberOfLights) break;
+      Light light = UnpackLight(clusterList.lightList[i]);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
@@ -167,10 +177,14 @@ export default function(params) {
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
-	fragColor.x += float(clusterList.numberOfLights) * 0.25;
+	//fragColor.x += float(clusterList.numberOfLights) * 0.1;
 	//fragColor.z = float(indices.z) / float(u_numslices.z);
+	//fragColor.xyz = vec3(indices.xyz) / vec3(u_numslices.xyz);
+	//fragColor.yz = vec2(indices.xy) / vec2(u_numslices.xy);
+	//if (indices.x == 8 && indices.y == 8 && indices.z == 6) fragColor.xy = vec2(1.0, 1.0);
 
-    const vec3 ambientLight = vec3(0.025);
+    //const vec3 ambientLight = vec3(0.025);
+    const vec3 ambientLight = vec3(0.05);
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);

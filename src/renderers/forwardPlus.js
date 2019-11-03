@@ -80,7 +80,7 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     // Upload the camera view matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
 	gl.uniform3i(this._shaderProgram.u_numslices, this._xSlices, this._ySlices, this._zSlices);
-	gl.uniform4f(this._shaderProgram.u_filmextents, camera.getFilmWidth(), camera.getFilmHeight(), camera.near, camera.far);
+	gl.uniform4f(this._shaderProgram.u_filmextents, camera.fov, camera.aspect, camera.near, camera.far);
 	gl.uniform2i(this._shaderProgram.u_resolution, canvas.width, canvas.height);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
