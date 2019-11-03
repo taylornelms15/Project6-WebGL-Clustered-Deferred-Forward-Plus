@@ -16,7 +16,7 @@ export default function(params) {
   uniform mat4 u_viewMatrix;
   uniform ivec3 u_numslices;
   uniform vec4 u_filmextents;/*0: fov, 1: aspectratio, 2: near, 3: far */ 
-  uniform ivec2 u_resolution;
+  uniform vec3 u_cameraPos;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -156,6 +156,9 @@ export default function(params) {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
+	vec3 E = normalize(v_position - u_cameraPos);
+	vec3 reflected = reflect(E, normal);
+	float shininess = 1000.0;
 
     vec3 fragColor = vec3(0.0);
 
@@ -174,17 +177,17 @@ export default function(params) {
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
+	  float specangle = max(dot(L, reflected), 0.0);
+	  float specular = pow(specangle, shininess / 4.0);
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+	  fragColor += albedo * specular * light.color * vec3(lightIntensity);
     }
 	//fragColor.x += float(clusterList.numberOfLights) * 0.1;
 	//fragColor.z = float(indices.z) / float(u_numslices.z);
 	//fragColor.xyz = vec3(indices.xyz) / vec3(u_numslices.xyz);
-	//fragColor.yz = vec2(indices.xy) / vec2(u_numslices.xy);
-	//if (indices.x == 8 && indices.y == 8 && indices.z == 6) fragColor.xy = vec2(1.0, 1.0);
 
-    //const vec3 ambientLight = vec3(0.025);
-    const vec3 ambientLight = vec3(0.05);
+    const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);

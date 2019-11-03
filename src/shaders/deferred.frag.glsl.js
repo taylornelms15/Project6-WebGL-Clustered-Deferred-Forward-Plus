@@ -6,7 +6,9 @@ export default function(params) {
   uniform sampler2D u_gbuffers[${params.numGBuffers}];
   uniform sampler2D u_lightbuffer;
   uniform sampler2D u_clusterbuffer; 
+  uniform vec3 u_cameraPos;
 
+  uniform ivec3 u_numslices;
   varying vec2 v_uv;
 
   #define MAX_LIGHTS_PER_CLUSTER ${params.numLights}
@@ -98,18 +100,31 @@ export default function(params) {
 	return (i3.x + i3.y * numslices.x + i3.z * numslices.x * numslices.y);
   }
   
+	int packIndices(ivec3 indices) {
+		return (indices.x + indices.y * 256 + indices.z * 256 * 256);
+	}
+
+	ivec3 unpackIndices(int indices) {
+		int zval = indices / (256 * 256);
+		int working = indices - (zval * 256 * 256);
+		int yval = working / 256;
+		working = working - (yval * 256);
+		int xval = working;
+		return ivec3(xval, yval, zval);
+	}
+
   void main() {
-    // TODO: extract data from g buffers and do lighting
     vec4 gb0 = texture2D(u_gbuffers[0], v_uv);
     vec4 gb1 = texture2D(u_gbuffers[1], v_uv);
     vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
-    vec4 gb3 = texture2D(u_gbuffers[3], v_uv);
 	vec3 position = vec3(gb0.xyz);
 	vec3 normal = vec3(gb1.xyz);
 	vec3 albedo = vec3(gb2.xyz);
-
-	ivec3 clusterIndex = ivec3(gb3.xyz);
-	ivec3 numSlices = ivec3(gb1[3], gb2[3], gb3[3]);
+	ivec3 clusterIndex = unpackIndices(int(gb0.w));
+	ivec3 numSlices = u_numslices;
+	vec3 E = normalize(position - u_cameraPos);
+	vec3 reflected = reflect(E, normal);
+	float shininess = 1000.0;
 
 	int cIndex = overallIndex(clusterIndex, numSlices);
 	LightList clusterList;
@@ -124,14 +139,17 @@ export default function(params) {
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
+	  float specangle = max(dot(L, reflected), 0.0);
+	  float specular = pow(specangle, shininess / 4.0);
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+	  fragColor += albedo * specular * light.color * vec3(lightIntensity);
     }
 
 
+    const vec3 ambientLight = vec3(0.025);
+    fragColor += albedo * ambientLight;
 
-
-	vec3 indexNormalized = gb3.xyz / vec3(numSlices);
 
 	gl_FragColor = vec4(fragColor, 1.0);
   }

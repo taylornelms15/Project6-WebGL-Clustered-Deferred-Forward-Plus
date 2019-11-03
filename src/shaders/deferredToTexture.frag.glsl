@@ -54,6 +54,19 @@ vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     return normap.y * surftan + normap.x * surfbinor + normap.z * geomnor;
 }
 
+int packIndices(ivec3 indices) {
+	return (indices.x + indices.y * 256 + indices.z * 256 * 256);
+}
+
+ivec3 unpackIndices(int indices) {
+	int zval = indices / (256 * 256);
+	int working = indices - (zval * 256 * 256);
+	int yval = working / 256;
+	working = working - (yval * 256);
+	int xval = working;
+	return ivec3(xval, yval, zval);
+}
+
 void main() {
     vec3 norm = applyNormalMap(v_normal, vec3(texture2D(u_normap, v_uv)));
     vec3 col = vec3(texture2D(u_colmap, v_uv));
@@ -62,9 +75,7 @@ void main() {
 	vec4 ssPos = u_viewMatrix * vPos;
 	ivec3 indices = index3ForScreenPosition(ssPos.xyz);
 
-    // TODO: populate your g buffer
-	gl_FragData[0] = vPos;
-	gl_FragData[1] = vec4(norm, u_numslices.x);
-	gl_FragData[2] = vec4(col, u_numslices.y);
-	gl_FragData[3] = vec4(indices, u_numslices.z);
+	gl_FragData[0] = vec4(v_position, packIndices(indices));
+	gl_FragData[1] = vec4(norm, 1.0);
+	gl_FragData[2] = vec4(col, 1.0);
 }
