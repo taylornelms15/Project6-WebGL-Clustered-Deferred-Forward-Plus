@@ -7,11 +7,12 @@ export default function(params) {
   uniform sampler2D u_lightbuffer;
   uniform sampler2D u_clusterbuffer; 
   uniform vec3 u_cameraPos;
+  uniform vec4 u_material;/*0: diffuse multiplier, 1:specular multiplier, 2:ambient multiplier, 3:shininess coefficient */
 
   uniform ivec3 u_numslices;
   varying vec2 v_uv;
 
-  #define MAX_LIGHTS_PER_CLUSTER ${params.numLights}
+  #define MAX_LIGHTS_PER_CLUSTER ${params.maxLights}
 
   struct Light {
     vec3 position;
@@ -122,9 +123,13 @@ export default function(params) {
 	vec3 albedo = vec3(gb2.xyz);
 	ivec3 clusterIndex = unpackIndices(int(gb0.w));
 	ivec3 numSlices = u_numslices;
+	float diffuseFactor = u_material.x;
+	float specularFactor = u_material.y;
+	float ambientFactor = u_material.z;
+	float shininess = u_material.w;
+
 	vec3 E = normalize(position - u_cameraPos);
 	vec3 reflected = reflect(E, normal);
-	float shininess = 1000.0;
 
 	int cIndex = overallIndex(clusterIndex, numSlices);
 	LightList clusterList;
@@ -142,14 +147,16 @@ export default function(params) {
 	  float specangle = max(dot(L, reflected), 0.0);
 	  float specular = pow(specangle, shininess / 4.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
-	  fragColor += albedo * specular * light.color * vec3(lightIntensity);
+      fragColor += diffuseFactor * albedo * lambertTerm * light.color * vec3(lightIntensity);
+	  fragColor += specularFactor * specular * light.color * vec3(lightIntensity);
     }
 
 
-    const vec3 ambientLight = vec3(0.025);
+    vec3 ambientLight = vec3(ambientFactor);
     fragColor += albedo * ambientLight;
 
+	//for the tile map output
+	//fragColor.xyz = vec3(clusterIndex.xyz) / vec3(numSlices.xyz);
 
 	gl_FragColor = vec4(fragColor, 1.0);
   }

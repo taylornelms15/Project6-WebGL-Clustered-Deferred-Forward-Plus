@@ -1,6 +1,5 @@
 export default function(params) {
   return `
-  // TODO: This is pretty much just a clone of forward.frag.glsl.js
 
   #version 100
   precision highp float;
@@ -9,7 +8,6 @@ export default function(params) {
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
 
-  // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
 
   uniform mat4 u_viewProjectionMatrix;
@@ -17,12 +15,13 @@ export default function(params) {
   uniform ivec3 u_numslices;
   uniform vec4 u_filmextents;/*0: fov, 1: aspectratio, 2: near, 3: far */ 
   uniform vec3 u_cameraPos;
+  uniform vec4 u_material;/*0: diffuse multiplier, 1:specular multiplier, 2:ambient multiplier, 3:shininess coefficient */
 
   varying vec3 v_position;
   varying vec3 v_normal;
   varying vec2 v_uv;
 
-  #define MAX_LIGHTS_PER_CLUSTER ${params.numLights}
+  #define MAX_LIGHTS_PER_CLUSTER ${params.maxLights}
 
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
@@ -158,11 +157,13 @@ export default function(params) {
     vec3 normal = applyNormalMap(v_normal, normap);
 	vec3 E = normalize(v_position - u_cameraPos);
 	vec3 reflected = reflect(E, normal);
-	float shininess = 1000.0;
+	float diffuseFactor = u_material.x;
+	float specularFactor = u_material.y;
+	float ambientFactor = u_material.z;
+	float shininess = u_material.w;
 
     vec3 fragColor = vec3(0.0);
 
-    //Note: gl_FragCoord's z component has some kind of screen-space depth in it; not sure how to trust, though
 	vec4 screenSpaceCoord = u_viewMatrix * vec4(v_position, 1.0);
 	ivec3 indices = index3ForScreenPosition(screenSpaceCoord.xyz);
 	int cIndex = indexForScreenPosition(screenSpaceCoord.xyz);
@@ -180,15 +181,16 @@ export default function(params) {
 	  float specangle = max(dot(L, reflected), 0.0);
 	  float specular = pow(specangle, shininess / 4.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
-	  fragColor += albedo * specular * light.color * vec3(lightIntensity);
+      fragColor += diffuseFactor * albedo * lambertTerm * light.color * vec3(lightIntensity);
+	  fragColor += specularFactor * specular * light.color * vec3(lightIntensity);
     }
 	//fragColor.x += float(clusterList.numberOfLights) * 0.1;
 	//fragColor.z = float(indices.z) / float(u_numslices.z);
-	//fragColor.xyz = vec3(indices.xyz) / vec3(u_numslices.xyz);
 
-    const vec3 ambientLight = vec3(0.025);
+    vec3 ambientLight = vec3(u_material.z);
     fragColor += albedo * ambientLight;
+
+	//fragColor.xyz = vec3(indices.xyz) / vec3(u_numslices.xyz);
 
     gl_FragColor = vec4(fragColor, 1.0);
   }

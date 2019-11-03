@@ -1,9 +1,8 @@
 import TextureBuffer from './textureBuffer';
-import {NUM_LIGHTS} from '../scene';
+import {NUM_LIGHTS, MAX_LIGHTS_PER_CLUSTER} from '../scene';
 import { mat4, vec4, vec3, vec2 } from 'gl-matrix';
 import {Sphere, Box3, Vector3} from 'three';
 
-export const MAX_LIGHTS_PER_CLUSTER = 200;
 
 function squared(val){return val * val;}
 function distBetweenSqrd(point1, point2){
@@ -25,6 +24,8 @@ export default class BaseRenderer {
     this._xSlices = xSlices;
     this._ySlices = ySlices;
     this._zSlices = zSlices;
+	//DEFAULT: 1.0, 0.0, 0.025, 100.0
+	this._material = [1.0, 2.0, 0.025, 100.0];
   }
 
   updateClusters(camera, viewMatrix, scene) {
@@ -45,7 +46,7 @@ export default class BaseRenderer {
 	//let zTitantic = camera.whereverYouAre;
 
 	var xformedLights = [];
-	for (let i = 0; i < MAX_LIGHTS_PER_CLUSTER; i++){
+	for (let i = 0; i < NUM_LIGHTS; i++){
 		let lightPos = scene.lights[i].position;
 		let posVec = [lightPos[0], lightPos[1], lightPos[2], 1.0];
 		xformedLights[i] = vec4.create();

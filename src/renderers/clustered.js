@@ -1,7 +1,7 @@
 import { gl, WEBGL_draw_buffers, canvas } from '../init';
 import { mat4, vec4 } from 'gl-matrix';
 import { loadShaderProgram, renderFullscreenQuad } from '../utils';
-import { NUM_LIGHTS } from '../scene';
+import { NUM_LIGHTS, MAX_LIGHTS_PER_CLUSTER } from '../scene';
 import toTextureVert from '../shaders/deferredToTexture.vert.glsl';
 import toTextureFrag from '../shaders/deferredToTexture.frag.glsl';
 import QuadVertSource from '../shaders/quad.vert.glsl';
@@ -28,8 +28,10 @@ export default class ClusteredRenderer extends BaseRenderer {
     this._progShade = loadShaderProgram(QuadVertSource, fsSource({
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
+	  maxLights: MAX_LIGHTS_PER_CLUSTER,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]', 'u_clusterbuffer', 'u_lightbuffer', 'u_numslices', 'u_cameraPos'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]', 
+				'u_clusterbuffer', 'u_lightbuffer', 'u_numslices', 'u_cameraPos', 'u_material'],
       attribs: ['a_uv'],
     });
 
@@ -159,6 +161,7 @@ export default class ClusteredRenderer extends BaseRenderer {
     // TODO: Bind any other shader inputs
 	gl.uniform3i(this._progShade.u_numslices, this._xSlices, this._ySlices, this._zSlices);
 	gl.uniform3f(this._progShade.u_cameraPos, camera.position.x, camera.position.y, camera.position.z);
+	gl.uniform4f(this._progShade.u_material, this._material[0], this._material[1], this._material[2], this._material[3]);
 
     // Bind g-buffers
     const firstGBufferBinding = 0; // You may have to change this if you use other texture slots

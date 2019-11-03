@@ -27,8 +27,6 @@ ivec2 indicesLinear(int numslicesX, int numslicesY, vec3 screenPos, int zIndex) 
 	float frustumWidth = frustumHeight * u_filmextents.y;
 	float xPercentage = (screenPos.x + (frustumWidth * 0.5)) / frustumWidth;
 	float yPercentage = (screenPos.y + (frustumHeight * 0.5)) / frustumHeight;
-	//float xPercentage = gl_FragCoord.x / float(u_resolution.x);
-	//float yPercentage = gl_FragCoord.y / float(u_resolution.y);
 	int xIndex = int(xPercentage * float(numslicesX));
 	int yIndex = int(yPercentage * float(numslicesY));
 	return ivec2(xIndex, yIndex);
