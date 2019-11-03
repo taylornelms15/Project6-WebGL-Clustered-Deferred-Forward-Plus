@@ -25,7 +25,7 @@ export default class BaseRenderer {
     this._ySlices = ySlices;
     this._zSlices = zSlices;
 	//DEFAULT: 1.0, 0.0, 0.025, 100.0
-	this._material = [1.0, 2.0, 0.025, 100.0];
+	this._material = [1.0, 0.0, 0.025, 100.0];
   }
 
   updateClusters(camera, viewMatrix, scene) {
