@@ -15,13 +15,25 @@ WebGL Clustered and Forward+ Shading
 
 [![](img/video.png)](TODO)
 
-### (TODO: Your README)
+### Performance Analysis
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+In comparing my implementation of the Forward+ renderer and a Deferred-Clustered renderer, I actually had an issue finding situations where the Forward+ renderer performed better. It may be due to the testing centering purely on a single geometric model, but the Clustered renderer was faster in pretty much every implementation I had.
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+A note about all the performance analysis graphs: I was unable to uncap Chrome from a 60fps maximum, and the question posted on Piazza was unresolved at time of writing. As such, all of my graphs top out around 60fps, and I have focused on tuning parameters so that renderer performance ranges from a smooth 60fps down to infuriating slow-the-rest-of-my-computer-down-in-the-process sub-8fps speeds.
+
+#### Light Count
+
+For this scene, there were a few parameters I ended up tuning. One of the most basic ones was the number of lights in the scene. Unsurprisingly, as the number of lights increased, the framerate of the rendered scene decreased.
+
+![Effect of Light Count on Renderer Speed](img/Effect_of_Light_Count_on_Rendering_Speed.png)
+
+
+### Feature List (for pull request)
+
+Forward+ Renderer
+Deferred-Clustered Renderer
+Blinn-Phong Rendering Model
+Optimization - allow for difference in max lights per cluster and number of lights
 
 
 ### Credits
