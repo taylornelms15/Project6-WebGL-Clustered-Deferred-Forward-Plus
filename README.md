@@ -35,6 +35,14 @@ Or more tiles (23 shown here):
 
 ![23 split](img/tilemap_23.png)
 
+We also don't need to marry each component to the others. For instance, here are tile splits that keep the 15x15 default for the X and Y directions, but show splitting up the Z direction into 33 and 65 dimensions respectively:
+
+![z33 split](img/tilemap_z33.png)
+
+![z65 split](img/tilemap_z65.png)
+
+We will analyze the performance impacts below, but the motivation for any of this would be to weigh the computational and resource cost of forming the tiles and their light lists against the benefit of being more specific about how many lights will actually affect a given fragment in a cluster. Larger tiles may mean there are fewer, but it also means that a light on one side of the tile may be checked against a fragment far away on the other side of the tile.
+
 ### Performance Analysis
 
 In comparing my implementation of the Forward+ renderer and a Deferred-Clustered renderer, I actually had an issue finding situations where the Forward+ renderer performed better. It may be due to the testing centering purely on a single geometric model, but the Clustered renderer was faster in pretty much every implementation I had.
