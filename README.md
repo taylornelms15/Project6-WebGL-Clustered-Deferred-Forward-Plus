@@ -25,8 +25,25 @@ A note about all the performance analysis graphs: I was unable to uncap Chrome f
 
 For this scene, there were a few parameters I ended up tuning. One of the most basic ones was the number of lights in the scene. Unsurprisingly, as the number of lights increased, the framerate of the rendered scene decreased.
 
-![Effect of Light Count on Renderer Speed](img/Effect_of_Light_Count_on_Rendering_Speed.png)
+![Effect of Light Count on Renderer Speed](img/Effect_of_Light_Count_on_Renderering_Speed.png)
 
+As you can see, the Clustered renderer performed significantly better, able to handle more lights before its inevitable decline to unusability.
+
+##### Optimization
+
+I did one particular optimization outside of the normal: I allowed for the maximum number of lights affecting a cluster to be fewer than the maximum number of lights affecting a scene. This was risky, because there was the real chance that more lights would affect a fragment in a cluster than the data structure would allow, but it let me avoid some significant overhead in both how many light indices needed to be passed into a cluster, and how many times a fragment shader might loop over the lights potentially affecting it. This is more relevant with how much loop unrolling and paralellization is going on under the hood, since many shaders likely would go through a worst-case loop length even without that many lights affecting them.
+
+The risks when the numbers were off is that we would end up seeing strange artifacting of tiles lighting up when they had no reasonable business doing so. However, even for large numbers of lights, I found that assuming each cluster would be affected at maximum by half the lights in the scene allowed me to push the number of lights in the scene even higher:
+
+![Effect of Light Count on Rendering Speed fewer lights in cluster](img/Effect_of_Light_Count_on_Renderer_Speed_(fewer_lights_allowed_in_cluster).png)
+
+#### Tile Division
+
+The way in which I split the clustering tiles up also had an effect on rendering speed. This is where I actually noticed a difference between how the Forward+ and the Clustered renderer handled things. For the clustered renderer, the tile splits ended up mattering significantly for performance. However, the Forward+ renderer maintained steady performance across wide ranges of tile divisions.
+
+![Effect of Tile Split Dimensions on Renderer Speed All Dimensions](img/Effects_of_Tile_Split_Dimensions_on_Renderer_Speed_-_All_Dimensions.png)
+
+![Effect of Tile Split Dimensions on Renderer Speed Z Dimension](img/Effects_of_Tile_Split_Dimensions_on_Renderer_Speed_-_Z_Dimension.png)
 
 ### Feature List (for pull request)
 
