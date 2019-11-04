@@ -21,6 +21,32 @@ These renderers operate on the idea that, for a given spatial region, only a few
 
 The difference between the Forward+ renderer and the Deferred-Clustered renderer in this project is that the Forward+ renderer does all its memory accesses and shading calculations in a single fragment shader. For the Deferred-Clustered renderer, one fragment shader will write various geometric data for each fragment to a buffer, and then will pass that buffer to the second fragment shader which calculates the effects of each light on that particular fragment.
 
+### Blinn-Phong Shading
+
+Blinn-Phong shading is a way of representing a limited, if still useful, material model to allow for us to simulate a variety of materials using only a few properties. The basic theory is that each material will be some combination of a diffuse-reflective component, a specular component, a degree of "ambient lighting" (which is not realistic, but can be useful for displaying geometry without direct illumination), and a tuning of that specular component to a degree of "sharpness." 
+
+My renderer implementations allow for a combination of all of these. Unfortunately, the model I was working from did not differentiate any material data within, so I instead made global changes to the material itself.
+
+With just ambient light, we see the following results:
+
+![Ambient](img/bp_ambient.png)
+
+With just a diffuse component represented, we get the following:
+
+![Diffuse](img/bp_diffuse.png)
+
+With just a specular component, and using a "specularity" exponent of 100, we see the following results:
+
+![Specular 100](img/bp_specular100.png)
+
+Note that we can tune this "specularity" to modify how sharply light is reflected. With a lower exponent of 10, we get the following:
+
+![Specular 10](img/bp_specular10.png)
+
+And with a larger exponent of 1000, we get much sharper "reflections" of the lights:
+
+![Specular 1000](img/bp_specular1000.png)
+
 #### Tile Splits
 
 By default, we split the scene into 15x15x15 tiles, logarithmically in the Z direction, and linearly in the X and Y directions. For our test scene, the tile that each fragment was put into can be seen in the following image; its X index is represented by the red component, Y by green, and Z by blue:
