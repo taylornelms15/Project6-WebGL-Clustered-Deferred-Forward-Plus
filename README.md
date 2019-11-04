@@ -21,6 +21,10 @@ These renderers operate on the idea that, for a given spatial region, only a few
 
 The difference between the Forward+ renderer and the Deferred-Clustered renderer in this project is that the Forward+ renderer does all its memory accesses and shading calculations in a single fragment shader. For the Deferred-Clustered renderer, one fragment shader will write various geometric data for each fragment to a buffer, and then will pass that buffer to the second fragment shader which calculates the effects of each light on that particular fragment.
 
+You can see a debug view of "how many lights are in a given tile" in this gif. In it, I add some red to a fragment for each light that is affecting its tile:
+
+![Light Presence](img/clusterpresence.gif)
+
 ### Blinn-Phong Shading
 
 Blinn-Phong shading is a way of representing a limited, if still useful, material model to allow for us to simulate a variety of materials using only a few properties. The basic theory is that each material will be some combination of a diffuse-reflective component, a specular component, a degree of "ambient lighting" (which is not realistic, but can be useful for displaying geometry without direct illumination), and a tuning of that specular component to a degree of "sharpness." 
@@ -115,12 +119,19 @@ I had to measure this performance across different domains of light count in ord
 
 As you can see, smaller lights yielded much higher rendering speeds.
 
+#### Clustered Shading - G-Buffer Distinction
+
+I by default packed all my relevant information into three geometry buffers to go from one fragment shader to another, packing the tile indices into one value and such to cut a buffer from the provided total. However, in the interest of analyzing its effects, I added in a duplicate buffer in some less-official trials, to see what the difference was.
+
+In all, I only shaved a few frames per second off my baseline of three geometry buffers; the difference between a 19fps and 16fps in the 300-light case. That said, for memory-conscious applications, it could be worth it.
+
 ### Feature List (for pull request)
 
 Forward+ Renderer
 Deferred-Clustered Renderer
 Blinn-Phong Rendering Model
 Optimization - allow for difference in max lights per cluster and number of lights
+Optimization - 
 
 
 ### Credits
