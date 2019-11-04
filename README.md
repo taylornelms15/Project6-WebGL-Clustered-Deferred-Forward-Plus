@@ -15,6 +15,26 @@ WebGL Clustered and Forward+ Shading
 
 [![](img/video.png)](TODO)
 
+### Tiled Clustered Renderer
+
+These renderers operate on the idea that, for a given spatial region, only a few lights will have a noticeable effect on the shading of objects in that region. A pre-pass is done to correlate each tile/cluster with a number of lights in the scene. Then, in the fragment shaders themselves, shading is only computed between fragments and the lights that may affect its cluster.
+
+The difference between the Forward+ renderer and the Deferred-Clustered renderer in this project is that the Forward+ renderer does all its memory accesses and shading calculations in a single fragment shader. For the Deferred-Clustered renderer, one fragment shader will write various geometric data for each fragment to a buffer, and then will pass that buffer to the second fragment shader which calculates the effects of each light on that particular fragment.
+
+#### Tile Splits
+
+By default, we split the scene into 15x15x15 tiles, logarithmically in the Z direction, and linearly in the X and Y directions. For our test scene, the tile that each fragment was put into can be seen in the following image; its X index is represented by the red component, Y by green, and Z by blue:
+
+![15 split](img/tilemap_15.png)
+
+That said, other tile split sizes were possible. We could go with fewer tiles (7 shown here):
+
+![7 split](img/tilemap_7.png)
+
+Or more tiles (23 shown here):
+
+![23 split](img/tilemap_23.png)
+
 ### Performance Analysis
 
 In comparing my implementation of the Forward+ renderer and a Deferred-Clustered renderer, I actually had an issue finding situations where the Forward+ renderer performed better. It may be due to the testing centering purely on a single geometric model, but the Clustered renderer was faster in pretty much every implementation I had.
@@ -54,6 +74,8 @@ The radius of each light the model also had an effect on renderer speed; as each
 I had to measure this performance across different domains of light count in order to both (a) get useful data, and (b) not crash my computer with abysmally slow operation in the worst cases. As such, this graph is a bit messy; the color is correlated to light radius, and line type is correlated to which renderer I used for each run.
 
 ![Effect of Light Radius on Renderer Speed](img/Effects_of_Light_Radius_on_Renderer_Speed.png)
+
+As you can see, smaller lights yielded much higher rendering speeds.
 
 ### Feature List (for pull request)
 
