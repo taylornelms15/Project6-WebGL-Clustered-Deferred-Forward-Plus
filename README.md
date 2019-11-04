@@ -13,7 +13,9 @@ WebGL Clustered and Forward+ Shading
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+![Demo Gif1](img/demovid_numlights.gif)
+
+![Demo Gif2](img/demovid_bp.gif)
 
 ### Tiled Clustered Renderer
 
