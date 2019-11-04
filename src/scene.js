@@ -7,7 +7,7 @@ export const LIGHT_MAX = [14, 20, 6];
 export const LIGHT_RADIUS = 5.0;
 export const LIGHT_DT = -0.03;
 
-export const NUM_LIGHTS = 10;
+export const NUM_LIGHTS = 200;
 export const MAX_LIGHTS_PER_CLUSTER = NUM_LIGHTS;
 export const SPLITS_XY = [15, 15];
 export const SPLITS_Z = [15];
