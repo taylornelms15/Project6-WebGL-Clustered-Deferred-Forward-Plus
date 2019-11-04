@@ -45,6 +45,16 @@ The way in which I split the clustering tiles up also had an effect on rendering
 
 ![Effect of Tile Split Dimensions on Renderer Speed Z Dimension](img/Effects_of_Tile_Split_Dimensions_on_Renderer_Speed_-_Z_Dimension.png)
 
+I did the experiment with both variations in how all dimensions were split, and also with just modifying the split in the Z dimension. We can see that the Forward+ renderer stays steady through multiple variations, while the Clustered renderer has some peak areas, and falls off on either side of them.
+
+#### Light Radius
+
+The radius of each light the model also had an effect on renderer speed; as each light became bigger or smaller, it ends up affecting more clusters of fragments, meaning that the computational workload for each fragment is potentially drastically increased.
+
+I had to measure this performance across different domains of light count in order to both (a) get useful data, and (b) not crash my computer with abysmally slow operation in the worst cases. As such, this graph is a bit messy; the color is correlated to light radius, and line type is correlated to which renderer I used for each run.
+
+![Effect of Light Radius on Renderer Speed](img/Effects_of_Light_Radius_on_Renderer_Speed.png)
+
 ### Feature List (for pull request)
 
 Forward+ Renderer
