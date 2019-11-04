@@ -47,6 +47,10 @@ And with a larger exponent of 1000, we get much sharper "reflections" of the lig
 
 ![Specular 1000](img/bp_specular1000.png)
 
+Combining all of these, we can create a very interesting material for our scene. The renderer itself adds the components together to get the following results:
+
+![BP Combined](img/bp_combined.png)
+
 #### Tile Splits
 
 By default, we split the scene into 15x15x15 tiles, logarithmically in the Z direction, and linearly in the X and Y directions. For our test scene, the tile that each fragment was put into can be seen in the following image; its X index is represented by the red component, Y by green, and Z by blue:
