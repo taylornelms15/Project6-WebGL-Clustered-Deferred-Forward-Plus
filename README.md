@@ -13,7 +13,9 @@ WebGL Clustered and Forward+ Shading
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+![Demo Gif1](img/demovid_numlights.gif)
+
+![Demo Gif2](img/demovid_bp.gif)
 
 ### Tiled Clustered Renderer
 
@@ -124,15 +126,6 @@ As you can see, smaller lights yielded much higher rendering speeds.
 I by default packed all my relevant information into three geometry buffers to go from one fragment shader to another, packing the tile indices into one value and such to cut a buffer from the provided total. However, in the interest of analyzing its effects, I added in a duplicate buffer in some less-official trials, to see what the difference was.
 
 In all, I only shaved a few frames per second off my baseline of three geometry buffers; the difference between a 19fps and 16fps in the 300-light case. That said, for memory-conscious applications, it could be worth it.
-
-### Feature List (for pull request)
-
-Forward+ Renderer
-Deferred-Clustered Renderer
-Blinn-Phong Rendering Model
-Optimization - allow for difference in max lights per cluster and number of lights
-Optimization - 
-
 
 ### Credits
 
