@@ -127,15 +127,6 @@ I by default packed all my relevant information into three geometry buffers to g
 
 In all, I only shaved a few frames per second off my baseline of three geometry buffers; the difference between a 19fps and 16fps in the 300-light case. That said, for memory-conscious applications, it could be worth it.
 
-### Feature List (for pull request)
-
-Forward+ Renderer
-Deferred-Clustered Renderer
-Blinn-Phong Rendering Model
-Optimization - allow for difference in max lights per cluster and number of lights
-Optimization - 
-
-
 ### Credits
 
 * [Three.js](https://github.com/mrdoob/three.js) by [@mrdoob](https://github.com/mrdoob) and contributors
